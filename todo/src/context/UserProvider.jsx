@@ -1,0 +1,35 @@
+import { useState } from 'react'
+import { UserContext } from './UserContext'
+import axios from 'axios'
+
+export default function UserProvider({ children }) {
+  const userFromStorage = sessionStorage.getItem('user')
+  const [user, setUser] = useState(userFromStorage ? JSON.parse(userFromStorage) : { email: '', password: '' })
+
+  const signUp = async () => {
+    try {
+      const headers = { headers: { 'Content-Type': 'application/json' } }
+      await axios.post(`${import.meta.env.VITE_API_URL}/user/signup`, { user }, headers)
+      setUser({ email: '', password: '' })
+    } catch (err) {
+      console.error('Signup error:', err.response?.data || err.message)
+    }
+  }
+
+  const signIn = async () => {
+    try {
+      const headers = { headers: { 'Content-Type': 'application/json' } }
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/user/signin`, { user }, headers)
+      setUser(response.data)
+      sessionStorage.setItem('user', JSON.stringify(response.data))
+    } catch (err) {
+      console.error('Signin error:', err.response?.data || err.message)
+    }
+  }
+
+  return (
+    <UserContext.Provider value={{ user, setUser, signUp, signIn }}>
+      {children}
+    </UserContext.Provider>
+  )
+}
